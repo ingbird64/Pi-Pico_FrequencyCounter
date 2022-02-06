@@ -1,2 +1,2 @@
 # Pi-Pico_FrequencyCounter
-Reciprokal Frequency Counter with Pi Pico
+Reciprocal frequency counter with Pi Pico
