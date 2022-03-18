@@ -18,8 +18,8 @@
 // GLOBAL DECLARATIONS -------------------
 #define GATECONTROL_PIN 8
 #define GATESTATUS_PIN 10
-#define FREF_A_PIN 9
-#define FREF_B_PIN 13
+#define FCLOCK_A_PIN 9
+#define FCLOCK_B_PIN 13
 #define FIN_A_PIN 11
 #define FIN_B_PIN 15
 #define LED_PIN 25
@@ -79,7 +79,7 @@ char lcd_output_string[40];
 char unit_string[10];
 char gatetime_string[20] = "1s    ";
 
-bool button_pressed() {
+bool rangebutton_pressed() {
     static bool buttonActState = false;
     static bool buttonLastState = false;
     static bool buttonSteadyState = false;
@@ -107,7 +107,7 @@ bool button_pressed() {
 void on_pwm_wrap() {
     pwm_interupt_status = pwm_get_irq_status_mask();
     if (pwm_interupt_status & 0x10) {
-        pwm_clear_irq(pwm_gpio_to_slice_num(FREF_A_PIN));
+        pwm_clear_irq(pwm_gpio_to_slice_num(FCLOCK_A_PIN));
         t_counter_a_high++;
     }
 
@@ -117,7 +117,7 @@ void on_pwm_wrap() {
     }
 
     if (pwm_interupt_status & 0x40) {
-        pwm_clear_irq(pwm_gpio_to_slice_num(FREF_B_PIN));
+        pwm_clear_irq(pwm_gpio_to_slice_num(FCLOCK_B_PIN));
         t_counter_b_high++;
     }
 
@@ -144,41 +144,38 @@ int main() {
     sleep_ms(1000);
 
     // Tell the used GPIOs  they are allocated to the PWM
-    gpio_set_function(FREF_A_PIN, GPIO_FUNC_PWM);
-    gpio_set_function(FREF_B_PIN, GPIO_FUNC_PWM);
+    gpio_set_function(FCLOCK_A_PIN, GPIO_FUNC_PWM);
+    gpio_set_function(FCLOCK_B_PIN, GPIO_FUNC_PWM);
     gpio_set_function(FIN_A_PIN, GPIO_FUNC_PWM);
     gpio_set_function(FIN_B_PIN, GPIO_FUNC_PWM);
 
     // Find out which PWM slice is connected to used pins
-    uint slice_fref_a = pwm_gpio_to_slice_num(FREF_A_PIN);
-    uint slice_fref_b = pwm_gpio_to_slice_num(FREF_B_PIN);
+    uint slice_fclock_a = pwm_gpio_to_slice_num(FCLOCK_A_PIN);
+    uint slice_fclock_b = pwm_gpio_to_slice_num(FCLOCK_B_PIN);
     uint slice_fin_a = pwm_gpio_to_slice_num(FIN_A_PIN);
     uint slice_fin_b = pwm_gpio_to_slice_num(FIN_B_PIN);
 
     // Mask our slice's IRQ output into the PWM block's single interrupt line,
     // and register our interrupt handler
-    pwm_clear_irq(slice_fref_a);
-    pwm_set_irq_enabled(slice_fref_a, true);
-    pwm_clear_irq(slice_fref_b);
-    pwm_set_irq_enabled(slice_fref_b, true);
+    pwm_clear_irq(slice_fclock_a);
+    pwm_set_irq_enabled(slice_fclock_a, true);
+    pwm_clear_irq(slice_fclock_b);
+    pwm_set_irq_enabled(slice_fclock_b, true);
     pwm_clear_irq(slice_fin_a);
     pwm_set_irq_enabled(slice_fin_a, true);
     pwm_clear_irq(slice_fin_b);
     pwm_set_irq_enabled(slice_fin_b, true);
-
     irq_set_exclusive_handler(PWM_IRQ_WRAP, on_pwm_wrap);
     irq_set_enabled(PWM_IRQ_WRAP, true);
 
     // Get some sensible defaults for the slice configuration. By default, the
     // counter is allowed to wrap over its maximum range (0 to 2**16-1)
     pwm_config config = pwm_get_default_config();
-
     // Set Count on falling edge of the B pin input
     pwm_config_set_clkdiv_mode( &config, PWM_DIV_B_FALLING);
-
     // Load the configuration into our PWM slice, and set it running.
-    pwm_init(slice_fref_a, &config, true);
-    pwm_init(slice_fref_b, &config, true);
+    pwm_init(slice_fclock_a, &config, true);
+    pwm_init(slice_fclock_b, &config, true);
     pwm_init(slice_fin_a, &config, true);
     pwm_init(slice_fin_b, &config, true);
 
@@ -204,7 +201,7 @@ int main() {
 
     lcd_clear();
     while (true) {
-        if (button_pressed()) {
+        if (rangebutton_pressed()) {
             switch (range) {
             case 0:
                 gatetime = 980;
@@ -249,7 +246,7 @@ int main() {
             gate_status_old = gate_status;
             GateChangeTime = make_timeout_time_ms(gatetime);
             if (gate_status) {
-                t_counter_b_low = pwm_get_counter(slice_fref_b);
+                t_counter_b_low = pwm_get_counter(slice_fclock_b);
                 f_counter_b_low = pwm_get_counter(slice_fin_b);
                 f_counter = f_counter_b_high;
                 f_counter = f_counter << 16;
@@ -262,7 +259,7 @@ int main() {
                 t_value = t_counter - t_counter_b_oldvalue;
                 t_counter_b_oldvalue = t_counter;
             } else {
-                t_counter_a_low = pwm_get_counter(slice_fref_a);
+                t_counter_a_low = pwm_get_counter(slice_fclock_a);
                 f_counter_a_low = pwm_get_counter(slice_fin_a);
                 f_counter = f_counter_a_high;
                 f_counter = f_counter << 16;
