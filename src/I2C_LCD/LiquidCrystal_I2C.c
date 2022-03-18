@@ -1,12 +1,3 @@
-#include "LiquidCrystal_I2C.h"
-
-#include <stdint.h>
-#include <stdbool.h>
-#include <pico/stdlib.h>
-#include <hardware/i2c.h>
-#include <stdio.h>
-#include <string.h>
-
 /* Example library to drive a 16x2 LCD panel via a I2C bridge chip (e.g. PCF8574)
 
    You will need to use a level shifter on the I2C line!. 
@@ -22,9 +13,19 @@
    GPIO 5 (pin 7)-> SCL on LCD bridge board
    VBUS          -> VCC on LCD bridge board
    GND (pin 38)  -> GND on LCD bridge board
+   
+   Author: yeyee2901
+   you find the original source at github:
+   - https://github.com/yeyee2901/raspberry-pico-LiquidCrystal-I2C
 */
 
-
+#include "LiquidCrystal_I2C.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <pico/stdlib.h>
+#include <hardware/i2c.h>
+#include <stdio.h>
+#include <string.h>
 
 // Private declaration - user doesn't need to know the details
 LCD_i2c_t __lcd_inst_t;
