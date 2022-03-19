@@ -4,8 +4,8 @@ Using four of the internal pwm-counter for counting the input pulses and the ref
 
 Only a few components are required:
 - Pi Pico
-- 74HC02
-- 74HC74
+- 74AC02
+- 74AC74
 - 10MHz-XO
 - LCD-Display with I2C-Bus
 
